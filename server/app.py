@@ -17,9 +17,7 @@ db.init_app(app)
 api = Api(app)
 
 class Home(Resource):
-
     def get(self):
-        
         response_dict = {
             "message": "Welcome to the Newsletter RESTful API",
         }
@@ -31,12 +29,8 @@ class Home(Resource):
 
         return response
 
-api.add_resource(Home, '/')
-
 class Newsletters(Resource):
-
     def get(self):
-        
         response_dict_list = [n.to_dict() for n in Newsletter.query.all()]
 
         response = make_response(
@@ -47,7 +41,6 @@ class Newsletters(Resource):
         return response
 
     def post(self):
-        
         new_record = Newsletter(
             title=request.form['title'],
             body=request.form['body'],
@@ -65,12 +58,8 @@ class Newsletters(Resource):
 
         return response
 
-api.add_resource(Newsletters, '/newsletters')
-
 class NewsletterByID(Resource):
-
     def get(self, id):
-
         response_dict = Newsletter.query.filter_by(id=id).first().to_dict()
 
         response = make_response(
@@ -79,9 +68,43 @@ class NewsletterByID(Resource):
         )
 
         return response
+    
+    def patch(self, id):
+        record = Newsletter.query.filter_by(id = id).first()
+        for attr in request.form:
+            setattr(record, attr, request.form[attr])
 
+        db.session.add(record)
+        db.session.commit()
+
+        response_dict = record.to_dict()
+
+        response = make_response(
+            response_dict,
+            200
+        )
+
+        return response
+    
+    def delete(self, id):
+        record = Newsletter.query.filter(Newsletter.id == id).first()
+
+        db.session.delete(record)
+        db.session.commit()
+
+        response_dict = {"message": "record successfully deleted"}
+
+        response = make_response(
+            response_dict,
+            200
+        )
+
+        return response
+
+
+api.add_resource(Home, '/')
+api.add_resource(Newsletters, '/newsletters')
 api.add_resource(NewsletterByID, '/newsletters/<int:id>')
-
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
